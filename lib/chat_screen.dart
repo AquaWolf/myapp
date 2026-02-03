@@ -28,16 +28,27 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    // Startnachricht
     _messages.add(ChatMessage(
-      text: 'Hallo! Ich bin dein DB Expert AI Begleiter. Wie kann ich dir heute helfen?',
+      text: 'Hallo! Ich bin dein DB Expert AI Begleiter. Wie kann ich dir helfen?',
       isUser: false,
       type: 'GENERAL',
     ));
   }
 
+  // Hilfsmethode um die Historie für Genkit zu formatieren
+  List<Map<String, dynamic>> _getHistory() {
+    return _messages.map((msg) {
+      return {
+        'role': msg.isUser ? 'user' : 'model',
+        'content': [{'text': msg.text}],
+      };
+    }).toList();
+  }
+
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
+
+    final historyBeforeRequest = _getHistory();
 
     setState(() {
       _messages.add(ChatMessage(text: text, isUser: true));
@@ -46,10 +57,12 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.clear();
 
     try {
-      // Aufruf des Genkit Flows via Firebase Cloud Functions
       final result = await FirebaseFunctions.instance
           .httpsCallable('smartAssistantFlow')
-          .call(text);
+          .call({
+            'prompt': text,
+            'history': historyBeforeRequest,
+          });
 
       final data = Map<String, dynamic>.from(result.data);
       
@@ -64,7 +77,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       setState(() {
         _messages.add(ChatMessage(
-          text: 'Fehler bei der Anfrage: $e',
+          text: 'Fehler: $e',
           isUser: false,
           type: 'GENERAL',
         ));
@@ -87,29 +100,7 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        title: Column(
-          children: [
-            Text(
-              'DB Expert AI',
-              style: GoogleFonts.spaceGrotesk(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 8, height: 8,
-                  decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
-                ),
-                const SizedBox(width: 4),
-                Text('Live Tracking', style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : Colors.grey[600])),
-              ],
-            ),
-          ],
-        ),
+        title: Text('DB Expert AI', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: Column(
@@ -135,7 +126,7 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
-          if (_isLoading) const Padding(padding: EdgeInsets.all(8.0), child: LinearProgressIndicator()),
+          if (_isLoading) const LinearProgressIndicator(),
           _buildInputField(isDark, surfaceColor),
         ],
       ),
@@ -148,12 +139,9 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(12),
-        decoration: const BoxDecoration(
-          color: Color(0xFF135BEC),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(16), topRight: Radius.circular(4),
-            bottomLeft: Radius.circular(16), bottomRight: Radius.circular(16),
-          ),
+        decoration: BoxDecoration(
+          color: const Color(0xFF135BEC),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Text(text, style: const TextStyle(color: Colors.white)),
       ),
@@ -161,52 +149,26 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildAiRichDataCard(BuildContext context, Map<String, dynamic> data) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(width: 40), // Platz für Avatar
-        Flexible(
-          child: Container(
-            width: screenWidth * 0.75,
-            margin: const EdgeInsets.only(bottom: 16),
-            child: AiRichDataCard(data: data),
-          ),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(left: 40, bottom: 16),
+      child: AiRichDataCard(data: data),
     );
   }
 
   Widget _buildInputField(bool isDark, Color surfaceColor) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF101622) : const Color(0xFFF6F6F8),
-        border: Border(top: BorderSide(color: Colors.grey.withOpacity(isDark ? 0.2 : 0.1))),
-      ),
       child: Row(
         children: [
           Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: surfaceColor,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.grey.withOpacity(isDark ? 0.2 : 0.1)),
-              ),
-              child: TextField(
-                controller: _controller,
-                onSubmitted: _sendMessage,
-                decoration: const InputDecoration(
-                  hintText: 'Frag nach deiner Verbindung...',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                ),
-              ),
+            child: TextField(
+              controller: _controller,
+              onSubmitted: _sendMessage,
+              decoration: const InputDecoration(hintText: 'Nachricht...'),
             ),
           ),
-          const SizedBox(width: 8),
           IconButton(
-            icon: const Icon(Icons.send, color: Color(0xFF135BEC)),
+            icon: const Icon(Icons.send),
             onPressed: () => _sendMessage(_controller.text),
           ),
         ],
