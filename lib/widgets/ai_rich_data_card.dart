@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
 
 class AiRichDataCard extends StatelessWidget {
-  const AiRichDataCard({super.key});
+  final Map<String, dynamic> data;
+
+  const AiRichDataCard({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surfaceColor = isDark ? const Color(0xFF192233) : Colors.white;
+
+    final trainId = data['trainId'] ?? 'Unbekannt';
+    final route = data['route'] ?? 'Unbekannte Route';
+    final delay = data['delayMinutes'] ?? 0;
+    final status = data['status'] ?? 'ON TIME';
+    final scheduled = data['scheduledTime'] ?? '--:--';
+    final expected = data['expectedTime'] ?? '--:--';
+    final platform = data['platformInfo'] ?? '-';
+
+    final Color statusColor = delay > 0 ? Colors.red : Colors.green;
 
     return Container(
       decoration: BoxDecoration(
@@ -24,12 +36,11 @@ class AiRichDataCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Roter Balken links
             Container(
               width: 6,
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   bottomLeft: Radius.circular(16),
                 ),
@@ -45,45 +56,27 @@ class AiRichDataCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      height: 120,
+                      height: 80,
                       decoration: const BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage('assets/images/card_background.png'),
-                          fit: BoxFit.cover,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF135BEC), Color(0xFF0A2E7A)],
                         ),
                       ),
                       child: Stack(
                         children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [
-                                  Colors.black.withOpacity(0.8),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
                           Positioned(
-                            bottom: 16,
+                            bottom: 12,
                             left: 16,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'ICE 74',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                                ),
                                 Text(
-                                  'Zürich HB → Berlin Hbf',
-                                  style: TextStyle(color: Colors.grey[300]),
+                                  trainId,
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                                 ),
+                                Text(route, style: TextStyle(color: Colors.grey[300], fontSize: 12)),
                               ],
                             ),
                           ),
@@ -92,89 +85,46 @@ class AiRichDataCard extends StatelessWidget {
                             right: 12,
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'DELAYED',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10,
-                                ),
-                              ),
+                              decoration: BoxDecoration(color: statusColor, borderRadius: BorderRadius.circular(4)),
+                              child: Text(status, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
                             ),
                           )
                         ],
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(12.0),
                       child: Column(
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.schedule, color: Colors.red, size: 20),
+                              Icon(Icons.schedule, color: statusColor, size: 18),
                               const SizedBox(width: 8),
-                              const Text(
-                                '+15 min delay',
-                                style: TextStyle(
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Spacer(),
-                              const Icon(Icons.directions_transit, color: Colors.orange, size: 20),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Platform Change',
-                                style: TextStyle(
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              Text(
+                                delay > 0 ? '+$delay min Verspätung' : 'Pünktlich',
+                                style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 13),
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
-                                    Text('Previous departure: 10:48', style: TextStyle(fontSize: 12)),
-                                    Text('Expected: 11:03', style: TextStyle(fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Planmäßiger Halt', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                  Text(scheduled, style: const TextStyle(fontSize: 14)),
+                                ],
                               ),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: const [
-                                    Text('Scheduled: Pl. 4', style: TextStyle(fontSize: 12)),
-                                    Text('New: Pl. 6', style: TextStyle(fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  const Text('Gleis', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                  Text(platform, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                ],
                               ),
                             ],
-                          ),
-                          const Divider(height: 24),
-                          ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF135BEC).withOpacity(0.1),
-                              foregroundColor: const Color(0xFF135BEC),
-                              elevation: 0,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Text('View Alternatives'),
-                                SizedBox(width: 8),
-                                Icon(Icons.alt_route, size: 20),
-                              ],
-                            ),
                           ),
                         ],
                       ),
