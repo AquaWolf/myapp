@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:db_mcp_demo_flutter_app/models/rich_card_data.dart';
 
 class AiRichDataCard extends StatelessWidget {
-  final Map<String, dynamic> data;
+  final RichCardData data;
 
   const AiRichDataCard({super.key, required this.data});
 
@@ -10,13 +11,13 @@ class AiRichDataCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surfaceColor = isDark ? const Color(0xFF192233) : Colors.white;
 
-    final trainId = data['trainId'] ?? 'Unbekannt';
-    final route = data['route'] ?? 'Unbekannte Route';
-    final delay = data['delayMinutes'] ?? 0;
-    final status = data['status'] ?? 'ON TIME';
-    final scheduled = data['scheduledTime'] ?? '--:--';
-    final expected = data['expectedTime'] ?? '--:--';
-    final platform = data['platformInfo'] ?? '-';
+    final trainId = data.trainId;
+    final route = data.route;
+    final delay = data.delayMinutes;
+    final status = data.status;
+    final scheduled = data.scheduledTime;
+    final expected = data.expectedTime;
+    final platform = data.platformInfo;
 
     final Color statusColor = delay > 0 ? Colors.red : Colors.green;
 
@@ -74,9 +75,19 @@ class AiRichDataCard extends StatelessWidget {
                               children: [
                                 Text(
                                   trainId,
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
                                 ),
-                                Text(route, style: TextStyle(color: Colors.grey[300], fontSize: 12)),
+                                Text(
+                                  route,
+                                  style: TextStyle(
+                                    color: Colors.grey[300],
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -84,11 +95,24 @@ class AiRichDataCard extends StatelessWidget {
                             top: 12,
                             right: 12,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(color: statusColor, borderRadius: BorderRadius.circular(4)),
-                              child: Text(status, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: statusColor,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                status,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
                             ),
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -98,11 +122,21 @@ class AiRichDataCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.schedule, color: statusColor, size: 18),
+                              Icon(
+                                Icons.schedule,
+                                color: statusColor,
+                                size: 18,
+                              ),
                               const SizedBox(width: 8),
                               Text(
-                                delay > 0 ? '+$delay min Verspätung' : 'Pünktlich',
-                                style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 13),
+                                delay > 0
+                                    ? '+$delay min Verspätung'
+                                    : 'Pünktlich',
+                                style: TextStyle(
+                                  color: statusColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
                               ),
                             ],
                           ),
@@ -113,15 +147,36 @@ class AiRichDataCard extends StatelessWidget {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Planmäßiger Halt', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                                  Text(scheduled, style: const TextStyle(fontSize: 14)),
+                                  const Text(
+                                    'Planmäßiger Halt',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  Text(
+                                    scheduled,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
                                 ],
                               ),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  const Text('Gleis', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                                  Text(platform, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                  const Text(
+                                    'Gleis',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  Text(
+                                    platform,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],

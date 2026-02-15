@@ -3,15 +3,34 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/foundation.dart';
 import 'package:db_mcp_demo_flutter_app/chat_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialisiere Firebase
   await Firebase.initializeApp();
-  
+
+  if (kDebugMode) {
+    try {
+      String host = '192.168.1.47';
+      // Android Emulator 10.0.2.2, others localhost
+      /*if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        host = '10.0.2.2';
+      }*/
+      FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
+      await FirebaseAuth.instance.useAuthEmulator(host, 9099);
+      print(
+        "Connected to Firebase Emulators at $host:5001 (Functions) and $host:9099 (Auth)",
+      );
+    } catch (e) {
+      print("Error connecting to emulator: $e");
+    }
+  }
+
   // Automatischer anonymer Login für die Demo
   try {
     await FirebaseAuth.instance.signInAnonymously();
@@ -34,7 +53,9 @@ class ThemeProvider with ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
 
   void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    _themeMode = _themeMode == ThemeMode.light
+        ? ThemeMode.dark
+        : ThemeMode.light;
     notifyListeners();
   }
 }
@@ -50,11 +71,11 @@ class MyApp extends StatelessWidget {
 
     final TextTheme darkTextTheme = GoogleFonts.spaceGroteskTextTheme(
       ThemeData.dark().textTheme.apply(
-            bodyColor: Colors.white,
-            displayColor: Colors.white,
-          ),
+        bodyColor: Colors.white,
+        displayColor: Colors.white,
+      ),
     );
-    
+
     final ThemeData darkTheme = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -71,7 +92,7 @@ class MyApp extends StatelessWidget {
         backgroundColor: backgroundDark,
         elevation: 0,
         iconTheme: IconThemeData(color: Colors.grey[400]),
-        titleTextStyle: darkTextTheme.titleLarge, 
+        titleTextStyle: darkTextTheme.titleLarge,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -90,26 +111,30 @@ class MyApp extends StatelessWidget {
       ),
     );
 
-    final TextTheme lightTextTheme = GoogleFonts.spaceGroteskTextTheme(ThemeData.light().textTheme);
+    final TextTheme lightTextTheme = GoogleFonts.spaceGroteskTextTheme(
+      ThemeData.light().textTheme,
+    );
 
     final ThemeData lightTheme = ThemeData(
-       useMaterial3: true,
-       brightness: Brightness.light,
-       scaffoldBackgroundColor: backgroundLight,
-       primaryColor: primaryColor,
-       colorScheme: ColorScheme.fromSeed(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: backgroundLight,
+      primaryColor: primaryColor,
+      colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         brightness: Brightness.light,
         surface: backgroundLight,
       ),
-       textTheme: lightTextTheme,
-       appBarTheme: AppBarTheme(
+      textTheme: lightTextTheme,
+      appBarTheme: AppBarTheme(
         backgroundColor: backgroundLight,
         elevation: 0,
         iconTheme: IconThemeData(color: Colors.grey[600]),
-        titleTextStyle: lightTextTheme.titleLarge?.copyWith(color: Colors.black), 
-       ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
+        titleTextStyle: lightTextTheme.titleLarge?.copyWith(
+          color: Colors.black,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
@@ -152,8 +177,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color backgroundColor = isDark ? const Color(0xFF101622) : const Color(0xFFF6F6F8);
-    
+    final Color backgroundColor = isDark
+        ? const Color(0xFF101622)
+        : const Color(0xFFF6F6F8);
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -174,7 +201,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.settings, color: isDark ? Colors.grey[400] : Colors.grey[600]),
+            icon: Icon(
+              Icons.settings,
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+            ),
             onPressed: () {},
           ),
         ],
@@ -185,42 +215,52 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           Positioned(
             top: -MediaQuery.of(context).size.height * 0.1,
             left: -MediaQuery.of(context).size.width * 0.2,
-            child: _buildBlurCircle(MediaQuery.of(context).size.width * 0.8, MediaQuery.of(context).size.height * 0.4, Theme.of(context).primaryColor.withOpacity(0.2)),
+            child: _buildBlurCircle(
+              MediaQuery.of(context).size.width * 0.8,
+              MediaQuery.of(context).size.height * 0.4,
+              Theme.of(context).primaryColor.withOpacity(0.2),
+            ),
           ),
-           Positioned(
+          Positioned(
             bottom: -MediaQuery.of(context).size.height * 0.1,
             right: -MediaQuery.of(context).size.width * 0.2,
-            child: _buildBlurCircle(MediaQuery.of(context).size.width * 0.6, MediaQuery.of(context).size.height * 0.3, Colors.blue.withOpacity(0.1)),
+            child: _buildBlurCircle(
+              MediaQuery.of(context).size.width * 0.6,
+              MediaQuery.of(context).size.height * 0.3,
+              Colors.blue.withOpacity(0.1),
+            ),
           ),
 
           // Main Content
-          LayoutBuilder(builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Hero Section
-                      Column(
-                        children: [
-                          const SizedBox(height: 16),
-                          _buildHeroImage(),
-                          const SizedBox(height: 24),
-                          _buildHeroText(context),
-                        ],
-                      ),
-                      
-                      // Action Area
-                      _buildActionArea(context),
-                    ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Hero Section
+                        Column(
+                          children: [
+                            const SizedBox(height: 16),
+                            _buildHeroImage(),
+                            const SizedBox(height: 24),
+                            _buildHeroText(context),
+                          ],
+                        ),
+
+                        // Action Area
+                        _buildActionArea(context),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          }),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -230,10 +270,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     return Container(
       width: width,
       height: height,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 120, sigmaY: 120),
         child: Container(),
@@ -245,26 +282,25 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     return AspectRatio(
       aspectRatio: 4 / 5,
       child: Container(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.45,
+        ),
         decoration: BoxDecoration(
-           borderRadius: BorderRadius.circular(16),
-           boxShadow: [
-             BoxShadow(
-               color: Colors.black.withOpacity(0.25),
-               blurRadius: 30,
-               offset: const Offset(0, 15),
-             )
-           ]
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 30,
+              offset: const Offset(0, 15),
+            ),
+          ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.asset(
-                'assets/images/hero_train.jpg',
-                fit: BoxFit.cover,
-              ),
+              Image.asset('assets/images/hero_train.jpg', fit: BoxFit.cover),
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -283,7 +319,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 top: 16,
                 right: 16,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF101622).withOpacity(0.6),
                     borderRadius: BorderRadius.circular(999),
@@ -358,7 +397,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       ],
     );
   }
-  
+
   Widget _buildActionArea(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
@@ -384,7 +423,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-           Text(
+          Text(
             'Powered by Gemini & DB API',
             style: TextStyle(
               fontSize: 12,
@@ -397,7 +436,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   Widget _buildFeaturesGrid(bool isDark) {
-    final Color tileColor = isDark ? const Color(0xFF1E293B).withOpacity(0.5) : Colors.grey[200]!;
+    final Color tileColor = isDark
+        ? const Color(0xFF1E293B).withOpacity(0.5)
+        : Colors.grey[200]!;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -410,14 +451,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
   }
 
-  Widget _buildFeatureTile(bool isDark, Color tileColor, IconData icon, String label) {
+  Widget _buildFeatureTile(
+    bool isDark,
+    Color tileColor,
+    IconData icon,
+    String label,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: tileColor,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: isDark ? Colors.white.withOpacity(0.05) : Colors.transparent),
+          border: Border.all(
+            color: isDark ? Colors.white.withOpacity(0.05) : Colors.transparent,
+          ),
         ),
         child: Column(
           children: [

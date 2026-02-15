@@ -39,7 +39,9 @@ class AiTextMessage extends StatelessWidget {
                   bottomLeft: Radius.circular(16),
                   bottomRight: Radius.circular(16),
                 ),
-                border: Border.all(color: Colors.grey.withOpacity(isDark ? 0.2 : 0.1)),
+                border: Border.all(
+                  color: Colors.grey.withOpacity(isDark ? 0.2 : 0.1),
+                ),
               ),
               child: RichText(
                 text: TextSpan(
@@ -55,13 +57,32 @@ class AiTextMessage extends StatelessWidget {
   }
 
   List<TextSpan> _buildTextSpans() {
-    return const [
-      TextSpan(text: 'Current status for '),
-      TextSpan(
-        text: 'ICE 74',
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
-      TextSpan(text: ':'),
-    ];
+    final List<TextSpan> spans = [];
+    final RegExp trainIdPattern = RegExp(
+      r'\b(ICE|IC|EC|RJ|TGV|RE|RB|S)\s?\d+\b',
+    );
+
+    int start = 0;
+    for (final match in trainIdPattern.allMatches(text)) {
+      if (match.start > start) {
+        spans.add(TextSpan(text: text.substring(start, match.start)));
+      }
+      spans.add(
+        TextSpan(
+          text: text.substring(match.start, match.end),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF135BEC),
+          ),
+        ),
+      );
+      start = match.end;
+    }
+
+    if (start < text.length) {
+      spans.add(TextSpan(text: text.substring(start)));
+    }
+
+    return spans;
   }
 }
